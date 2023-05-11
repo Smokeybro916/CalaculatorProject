@@ -28,10 +28,66 @@ function reducer(state, { type, payload }) {
                 return state
             }
 
+            if (state.currentOperand == null) {
+                return {
+                    ...state,
+                    operation: payload.operation,
+                }
+            }
+
+            if (state.previousOperand == null) {
+                return {
+                    ...state,
+                    operation: payload.operation,
+                    previousOperand: state.currentOperand,
+                    currentOperand: null,
+                }
+            }
+            return {
+                ...state,
+                previousOperand: evaluate(state),
+                operation: payload.operation,
+                currentOperand: null
+            }
         case ACTIONS.CLEAR:
             return {}
+        case ACTIONS.EVALUATE:
+            if (state.operation == null || state.currentOperand  == null || state.previousOperand == null) {
+                return state
+            }
+
+            return {
+                ...state,
+                overwrite: true,
+                previousOperand: null,
+                currentOperand: evaluate(state),
+            }
     }
 }
+
+function evaluate({ currentOperand, previousOperand, operation}) {
+    const prev = parseFloat (previousOperand)
+    const current= parseFloat(currentOperand)
+    if (isNaN(prev) || isNaN(current)) return ""
+    let computation = ""
+    switch (operation) {
+        case "+":
+            computation = prev + current
+            break
+        case "-":
+            computation = prev - current
+            break
+        case "*":
+            computation = prev * current
+            break
+        case "÷":
+            computation = prev / current
+            break
+    }
+
+    return computation.toString()
+}
+
 
 function App() {
     const [{ currentOperand, previousOperand, operation}, dispatch] = useReducer(
@@ -62,7 +118,7 @@ function App() {
             <DigitButton digit="9" dispatch={dispatch} />
             <OperationButton operation="-" dispatch={dispatch} />
             <OperationButton operation="." dispatch={dispatch} />
-            <button className="span-two">=</button>
+            <button className="span-two" onClick={() => dispatch ({type: ACTIONS.EVALUATE})}>=</button>
         </div>
     )
 }
